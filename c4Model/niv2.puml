@@ -1,0 +1,32 @@
+@startuml niv2
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title C4 Model - Level 2: Container Diagram\nReal Estate Mobile App
+
+Person(user, "Utilisateur", "Acheteur, locataire ou propriétaire")
+
+System_Boundary(app, "Système Real Estate App") {
+
+  Container(reactnative, "App Mobile", "React Native + Expo SDK 50\nTypeScript", "Interface utilisateur mobile avec navigation, cartes et messagerie temps réel")
+  
+  Container(api, "API Backend", "Node.js + Express\nTypeScript", "Gestion authentification JWT, logique métier, API REST")
+  
+  Container(socketio, "Socket.IO Server", "Socket.IO", "Communication temps réel pour messagerie instantanée")
+  
+  ContainerDb(db, "MongoDB", "NoSQL Database", "Collections: Users, Properties, Messages")
+}
+
+System_Ext(cloudinary, "Cloudinary", "Stockage images propriétés et avatars")
+System_Ext(maplibre, "MapLibre + OpenStreetMap", "Cartes et géolocalisation gratuites")
+
+Rel(user, reactnative, "Utilise", "Mobile App")
+Rel(reactnative, api, "Requêtes REST", "HTTPS JSON")
+Rel(reactnative, socketio, "Messagerie temps réel", "WebSocket")
+Rel(reactnative, maplibre, "Affiche cartes", "HTTPS")
+
+Rel(api, db, "CRUD", "Mongoose ODM")
+Rel(api, cloudinary, "Upload/Delete images", "HTTPS")
+Rel(socketio, db, "Stocke messages", "Mongoose")
+
+SHOW_LEGEND()
+@enduml

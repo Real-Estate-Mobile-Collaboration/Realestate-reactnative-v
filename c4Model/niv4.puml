@@ -1,0 +1,246 @@
+@startuml Real_Estate_App_C4_Level4_Code
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Real Estate App - Niveau 4 : Diagramme de Code (Backend API)
+
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+
+package "Models" <<Rectangle>> #E8F5E9 {
+    class User {
+        - _id: ObjectId
+        - name: string
+        - email: string
+        - password: string
+        - phone?: string
+        - avatar?: string
+        - favorites: ObjectId[]
+        - createdAt: Date
+        - updatedAt: Date
+        --
+        + comparePassword(password): Promise<boolean>
+        + toJSON(): UserObject
+    }
+
+    class Property {
+        - _id: ObjectId
+        - title: string
+        - description: string
+        - price: number
+        - type: "apartment" | "house" | "villa" | "land"
+        - status: "available" | "sold" | "rented"
+        - images: string[]
+        - location: LocationObject
+        - features: FeaturesObject
+        - owner: ObjectId
+        - createdAt: Date
+        - updatedAt: Date
+        --
+        + toJSON(): PropertyObject
+    }
+
+    class Message {
+        - _id: ObjectId
+        - sender: ObjectId
+        - receiver: ObjectId
+        - property?: ObjectId
+        - content: string
+        - read: boolean
+        - createdAt: Date
+        --
+        + markAsRead(): Promise<void>
+    }
+
+    class "<<embedded>>\nLocation" as Location {
+        + address: string
+        + city: string
+        + coordinates: [number, number]
+    }
+
+    class "<<embedded>>\nFeatures" as Features {
+        + bedrooms: number
+        + bathrooms: number
+        + area: number
+        + parking: boolean
+        + furnished: boolean
+    }
+}
+
+package "Controllers" <<Rectangle>> #E3F2FD {
+    class AuthController {
+        + register(req, res): Promise<Response>
+        + login(req, res): Promise<Response>
+        + getProfile(req, res): Promise<Response>
+        + updateProfile(req, res): Promise<Response>
+    }
+
+    class PropertyController {
+        + createProperty(req, res): Promise<Response>
+        + getAllProperties(req, res): Promise<Response>
+        + getPropertyById(req, res): Promise<Response>
+        + updateProperty(req, res): Promise<Response>
+        + deleteProperty(req, res): Promise<Response>
+        + getMyProperties(req, res): Promise<Response>
+        + searchProperties(req, res): Promise<Response>
+    }
+
+    class MessageController {
+        + sendMessage(req, res): Promise<Response>
+        + getConversations(req, res): Promise<Response>
+        + getMessages(req, res): Promise<Response>
+        + markAsRead(req, res): Promise<Response>
+    }
+
+    class FavoriteController {
+        + addFavorite(req, res): Promise<Response>
+        + removeFavorite(req, res): Promise<Response>
+        + getFavorites(req, res): Promise<Response>
+        + checkFavorite(req, res): Promise<Response>
+    }
+}
+
+package "Middleware" <<Rectangle>> #FFF3E0 {
+    class AuthMiddleware {
+        + authenticate(req, res, next): Promise<void>
+        - verifyToken(token): Promise<UserPayload>
+        - extractToken(req): string | null
+    }
+
+    class MulterMiddleware {
+        + upload: Multer
+        + single(fieldName): RequestHandler
+        + array(fieldName, maxCount): RequestHandler
+    }
+}
+
+package "Services" <<Rectangle>> #FCE4EC {
+    class SocketService {
+        - io: Server
+        - connectedUsers: Map<string, string>
+        --
+        + initialize(server): void
+        + handleConnection(socket): void
+        + handleDisconnect(socket): void
+        + emitToUser(userId, event, data): void
+        + emitNewMessage(message): void
+    }
+}
+
+package "Utils" <<Rectangle>> #F3E5F5 {
+    class JWTUtils {
+        + generateToken(payload): string
+        + verifyToken(token): Promise<Payload>
+        + extractUserId(token): string
+    }
+
+    class CloudinaryUtils {
+        + uploadImageToCloudinary(buffer): Promise<UploadResult>
+        + deleteImageFromCloudinary(publicId): Promise<void>
+        + getOptimizedUrl(url, options): string
+    }
+}
+
+package "Routes" <<Rectangle>> #ECEFF1 {
+    class AuthRoutes {
+        POST /register
+        POST /login
+        GET /profile
+        PUT /profile
+    }
+
+    class PropertyRoutes {
+        GET /
+        GET /:id
+        POST /
+        PUT /:id
+        DELETE /:id
+        GET /my-properties
+        GET /search
+    }
+
+    class MessageRoutes {
+        POST /
+        GET /conversations
+        GET /:conversationId
+        PUT /:messageId/read
+    }
+
+    class FavoriteRoutes {
+        POST /:propertyId
+        DELETE /:propertyId
+        GET /
+        GET /check/:propertyId
+    }
+}
+
+package "Config" <<Rectangle>> #FFFDE7 {
+    class DatabaseConfig {
+        + connectDB(): Promise<void>
+        + MONGODB_URI: string
+    }
+
+    class CloudinaryConfig {
+        + cloudinary: Cloudinary
+        + CLOUD_NAME: string
+        + API_KEY: string
+        + API_SECRET: string
+    }
+}
+
+' Relationships - Routes to Controllers
+AuthRoutes ..> AuthController : uses
+PropertyRoutes ..> PropertyController : uses
+MessageRoutes ..> MessageController : uses
+FavoriteRoutes ..> FavoriteController : uses
+
+' Relationships - Routes to Middleware
+AuthRoutes ..> MulterMiddleware : uses
+PropertyRoutes ..> AuthMiddleware : protects
+PropertyRoutes ..> MulterMiddleware : uses
+MessageRoutes ..> AuthMiddleware : protects
+FavoriteRoutes ..> AuthMiddleware : protects
+
+' Relationships - Controllers to Models
+AuthController ..> User : manages
+PropertyController ..> Property : manages
+MessageController ..> Message : manages
+FavoriteController ..> User : updates favorites
+
+' Relationships - Controllers to Utils
+AuthController ..> JWTUtils : uses
+AuthController ..> CloudinaryUtils : uses
+PropertyController ..> CloudinaryUtils : uses
+
+' Relationships - Middleware to Utils
+AuthMiddleware ..> JWTUtils : verifies tokens
+
+' Relationships - Utils to Config
+CloudinaryUtils ..> CloudinaryConfig : uses
+
+' Relationships - Models
+Property *-- Location : contains
+Property *-- Features : contains
+Property --> User : owner
+Message --> User : sender/receiver
+Message --> Property : references
+User --> Property : favorites
+
+' Services
+SocketService ..> Message : emits events
+
+note right of SocketService
+  Gère les connexions WebSocket
+  pour les messages en temps réel
+end note
+
+note bottom of CloudinaryUtils
+  Stockage cloud pour les images
+  des propriétés et avatars
+end note
+
+note bottom of AuthMiddleware
+  Protège les routes nécessitant
+  une authentification JWT
+end note
+
+@enduml

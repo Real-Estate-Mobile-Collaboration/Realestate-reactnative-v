@@ -1,0 +1,54 @@
+@startuml niv3
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title C4 Model - Level 3: Component Diagram\nReal Estate Backend API
+
+Container_Boundary(api, "API Backend - Node.js/Express") {
+    
+    Component(authRoutes, "Auth Routes", "/api/auth/*", "Login, Register, Profile")
+    Component(propRoutes, "Property Routes", "/api/properties/*", "CRUD annonces")
+    Component(msgRoutes, "Message Routes", "/api/messages/*", "Conversations, messages")
+    Component(favRoutes, "Favorite Routes", "/api/favorites/*", "Gestion favoris")
+
+    Component(authCtrl, "AuthController", "Controller", "register, login, getMe, updateProfile")
+    Component(propCtrl, "PropertyController", "Controller", "getProperties, create, update, delete")
+    Component(msgCtrl, "MessageController", "Controller", "getConversations, sendMessage, deleteMessage")
+    Component(favCtrl, "FavoriteController", "Controller", "getFavorites, addFavorite, removeFavorite")
+
+    Component(authMiddleware, "Auth Middleware", "JWT Middleware", "Vérification token, protection routes")
+    Component(multerMiddleware, "Multer Middleware", "File Upload", "Parsing images multipart/form-data")
+
+    Component(socketService, "Socket Service", "Socket.IO", "Gestion connexions temps réel, émission messages")
+    Component(cloudinaryUtil, "Cloudinary Utils", "Service", "Upload et suppression images cloud")
+    Component(jwtUtil, "JWT Utils", "Service", "Génération et vérification tokens")
+    
+    Component(userModel, "User Model", "Mongoose Schema", "name, email, password, phone, avatar, favorites")
+    Component(propertyModel, "Property Model", "Mongoose Schema", "title, price, type, category, location, images, owner")
+    Component(msgModel, "Message Model", "Mongoose Schema", "sender, receiver, content, propertyId, read")
+}
+
+' Routes to Controllers
+Rel(authRoutes, authCtrl, "Appelle")
+Rel(propRoutes, propCtrl, "Appelle")
+Rel(msgRoutes, msgCtrl, "Appelle")
+Rel(favRoutes, favCtrl, "Appelle")
+
+' Middleware
+Rel(propRoutes, authMiddleware, "Protège")
+Rel(propRoutes, multerMiddleware, "Parse images")
+Rel(authRoutes, multerMiddleware, "Parse avatar")
+
+' Controllers to Services
+Rel(authCtrl, jwtUtil, "Génère token")
+Rel(authCtrl, cloudinaryUtil, "Upload avatar")
+Rel(propCtrl, cloudinaryUtil, "Upload images")
+Rel(msgCtrl, socketService, "Émet événements temps réel")
+
+' Controllers to Models
+Rel(authCtrl, userModel, "CRUD")
+Rel(propCtrl, propertyModel, "CRUD")
+Rel(msgCtrl, msgModel, "CRUD")
+Rel(favCtrl, userModel, "Update favorites[]")
+
+SHOW_LEGEND()
+@enduml

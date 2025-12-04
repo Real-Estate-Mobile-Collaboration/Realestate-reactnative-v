@@ -1,0 +1,27 @@
+@startuml niv1
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title C4 Model - Level 1: System Context Diagram\nReal Estate Mobile App
+
+Person(buyer, "Acheteur / Locataire", "Recherche des biens immobiliers à acheter ou louer")
+Person(owner, "Propriétaire", "Publie et gère ses annonces immobilières")
+Person(guest, "Visiteur", "Explore les annonces sans compte")
+
+System(mobileRN, "App Mobile React Native", "Application mobile Expo pour la recherche et publication de biens immobiliers")
+System(api, "API Backend", "Serveur Node.js + Express avec Socket.IO pour le temps réel")
+SystemDb(db, "MongoDB Atlas", "Base de données NoSQL pour utilisateurs, annonces, messages, favoris")
+
+System_Ext(cloudinary, "Cloudinary", "Stockage et CDN pour les images")
+System_Ext(openstreetmap, "OpenStreetMap + MapLibre", "Cartes et géolocalisation")
+
+Rel(buyer, mobileRN, "Recherche, contacte propriétaires, sauvegarde favoris")
+Rel(owner, mobileRN, "Publie et gère ses annonces")
+Rel(guest, mobileRN, "Explore les annonces (lecture seule)")
+
+Rel(mobileRN, api, "REST API + WebSocket (Socket.IO)", "HTTPS/WSS")
+Rel(api, db, "CRUD via Mongoose")
+Rel(api, cloudinary, "Upload/Delete images", "HTTPS")
+Rel(mobileRN, openstreetmap, "Affichage cartes", "HTTPS")
+
+SHOW_LEGEND()
+@enduml
