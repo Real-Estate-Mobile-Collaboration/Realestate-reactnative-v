@@ -2,9 +2,7 @@
 
 A modern, full-stack mobile application for real estate listings built with React Native (Expo) and Node.js. Browse, list, and manage properties with an elegant brown/earthy theme design.
 
-![Real Estate App Banner](readmieimg/Screenshot_20251203-190001_Expo%20Go.jpg)
 
----
 
 ## 📱 Screenshots
 
@@ -275,11 +273,6 @@ mapDefaultRegion: {
 
 ---
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
 
 ## 👨‍💻 Author
 
